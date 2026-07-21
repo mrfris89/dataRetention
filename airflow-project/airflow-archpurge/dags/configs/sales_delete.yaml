@@ -1,0 +1,12 @@
+dag_id: "archdelete_sales"
+dag_type: "delete"
+source_conn: "pg_source"
+target_conn: "oracle_target"
+source_table: "public.sales"
+target_table: "ARCHIVE.SALES"
+date_column: "sale_date"
+retention_days: 90
+batch_size: 5000
+delete_sleep: 0.5
+timeout_hours: 6
+alert_email: "dba@company.com"

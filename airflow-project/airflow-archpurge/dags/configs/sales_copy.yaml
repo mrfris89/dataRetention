@@ -1,0 +1,11 @@
+dag_id: "archcopy_sales"
+dag_type: "copy"
+source_conn: "pg_source"
+target_conn: "oracle_target"
+source_table: "public.sales"
+target_table: "ARCHIVE.SALES"
+date_column: "sale_date"
+retention_days: 90
+batch_size: 5000
+timeout_hours: 6
+alert_email: "dba@company.com"

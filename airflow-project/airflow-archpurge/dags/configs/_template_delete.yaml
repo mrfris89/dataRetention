@@ -1,0 +1,13 @@
+# Template DELETE — copy & rename jadi <table>_delete.yaml
+dag_id: "archdelete_<NAMA_TABLE>"
+dag_type: "delete"
+source_conn: "<CONN_ID_SOURCE>"
+target_conn: "<CONN_ID_TARGET>"
+source_table: "<schema.nama_table>"
+target_table: "<SCHEMA.NAMA_TABLE>"
+date_column: "<kolom_tanggal>"
+retention_days: 90
+batch_size: 5000
+delete_sleep: 0.5
+timeout_hours: 6
+alert_email: "dba@company.com"

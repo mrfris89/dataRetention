@@ -1,0 +1,80 @@
+[2026-07-21T14:47:50.871+0000] {processor.py:161} INFO - Started process (PID=26) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:47:50.872+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:47:50.876+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:50.875+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:47:50.940+0000] {processor.py:840} INFO - DAG(s) 'archcopy_sales', 'archdelete_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:47:51.258+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.257+0000] {override.py:1769} INFO - Created Permission View: can read on DAG:archcopy_sales
+[2026-07-21T14:47:51.269+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.269+0000] {override.py:1769} INFO - Created Permission View: can edit on DAG:archcopy_sales
+[2026-07-21T14:47:51.277+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.277+0000] {override.py:1769} INFO - Created Permission View: can delete on DAG:archcopy_sales
+[2026-07-21T14:47:51.291+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.291+0000] {override.py:1769} INFO - Created Permission View: can read on DAG:archdelete_sales
+[2026-07-21T14:47:51.298+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.297+0000] {override.py:1769} INFO - Created Permission View: can edit on DAG:archdelete_sales
+[2026-07-21T14:47:51.305+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.304+0000] {override.py:1769} INFO - Created Permission View: can delete on DAG:archdelete_sales
+[2026-07-21T14:47:51.305+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.305+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:47:51.319+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.319+0000] {dag.py:3055} INFO - Creating ORM DAG for archdelete_sales
+[2026-07-21T14:47:51.320+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.320+0000] {dag.py:3055} INFO - Creating ORM DAG for archcopy_sales
+[2026-07-21T14:47:51.320+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.320+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:47:51.321+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:51.321+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:47:51.350+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.483 seconds
+[2026-07-21T14:48:22.065+0000] {processor.py:161} INFO - Started process (PID=28) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:22.066+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:48:22.069+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:22.068+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:22.094+0000] {processor.py:840} INFO - DAG(s) 'archcopy_sales', 'archdelete_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:22.136+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:22.136+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:48:22.154+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:22.154+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:48:22.159+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:22.159+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:48:22.177+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.117 seconds
+[2026-07-21T14:48:52.319+0000] {processor.py:161} INFO - Started process (PID=30) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:52.321+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:48:52.324+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:52.323+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:52.350+0000] {processor.py:840} INFO - DAG(s) 'archdelete_sales', 'archcopy_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:48:52.396+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:52.396+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:48:52.416+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:52.415+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:48:52.422+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:52.421+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:48:52.445+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.130 seconds
+[2026-07-21T14:49:22.494+0000] {processor.py:161} INFO - Started process (PID=32) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:22.495+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:49:22.500+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:22.499+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:22.536+0000] {processor.py:840} INFO - DAG(s) 'archdelete_sales', 'archcopy_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:22.587+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:22.587+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:49:22.611+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:22.611+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:49:22.616+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:22.616+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:49:22.641+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.151 seconds
+[2026-07-21T14:49:52.687+0000] {processor.py:161} INFO - Started process (PID=34) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:52.689+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:49:52.692+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:52.691+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:52.714+0000] {processor.py:840} INFO - DAG(s) 'archcopy_sales', 'archdelete_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:49:52.757+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:52.756+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:49:52.776+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:52.775+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:49:52.780+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:52.779+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:49:52.798+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.115 seconds
+[2026-07-21T14:50:22.906+0000] {processor.py:161} INFO - Started process (PID=36) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:22.908+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:50:22.910+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:22.909+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:22.931+0000] {processor.py:840} INFO - DAG(s) 'archdelete_sales', 'archcopy_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:22.987+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:22.987+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:50:23.004+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:23.004+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:50:23.009+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:23.009+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:50:23.030+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.128 seconds
+[2026-07-21T14:50:53.101+0000] {processor.py:161} INFO - Started process (PID=38) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:53.103+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:50:53.106+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:53.105+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:53.128+0000] {processor.py:840} INFO - DAG(s) 'archdelete_sales', 'archcopy_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:50:53.171+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:53.171+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:50:53.190+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:53.190+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:50:53.195+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:53.195+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:50:53.213+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.116 seconds
+[2026-07-21T14:51:23.295+0000] {processor.py:161} INFO - Started process (PID=40) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:23.297+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:51:23.299+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:23.299+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:23.323+0000] {processor.py:840} INFO - DAG(s) 'archdelete_sales', 'archcopy_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:23.363+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:23.362+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:51:23.377+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:23.377+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:51:23.381+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:23.381+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:51:23.398+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.107 seconds
+[2026-07-21T14:51:53.485+0000] {processor.py:161} INFO - Started process (PID=42) to work on /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:53.487+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/dag_factory.py for tasks to queue
+[2026-07-21T14:51:53.490+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:53.489+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:53.514+0000] {processor.py:840} INFO - DAG(s) 'archcopy_sales', 'archdelete_sales' retrieved from /home/airflow/dags/dag_factory.py
+[2026-07-21T14:51:53.556+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:53.556+0000] {dag.py:3033} INFO - Sync 2 DAGs
+[2026-07-21T14:51:53.571+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:53.571+0000] {dag.py:3820} INFO - Setting next_dagrun for archcopy_sales to None, run_after=None
+[2026-07-21T14:51:53.576+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:53.575+0000] {dag.py:3820} INFO - Setting next_dagrun for archdelete_sales to None, run_after=None
+[2026-07-21T14:51:53.600+0000] {processor.py:183} INFO - Processing /home/airflow/dags/dag_factory.py took 0.120 seconds

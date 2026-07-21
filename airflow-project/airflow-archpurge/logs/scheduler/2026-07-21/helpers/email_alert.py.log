@@ -1,0 +1,45 @@
+[2026-07-21T14:47:50.840+0000] {processor.py:161} INFO - Started process (PID=25) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:47:50.841+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:47:50.847+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:47:50.847+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:47:50.850+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:47:50.887+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.052 seconds
+[2026-07-21T14:48:21.051+0000] {processor.py:161} INFO - Started process (PID=27) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:21.067+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:48:21.070+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:21.070+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:21.074+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:21.114+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.070 seconds
+[2026-07-21T14:48:51.285+0000] {processor.py:161} INFO - Started process (PID=29) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:51.287+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:48:51.289+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:48:51.289+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:51.292+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:48:51.318+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.038 seconds
+[2026-07-21T14:49:21.476+0000] {processor.py:161} INFO - Started process (PID=31) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:21.477+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:49:21.480+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:21.479+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:21.482+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:21.509+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.037 seconds
+[2026-07-21T14:49:51.665+0000] {processor.py:161} INFO - Started process (PID=33) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:51.666+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:49:51.669+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:49:51.668+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:51.672+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:49:51.695+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.033 seconds
+[2026-07-21T14:50:21.882+0000] {processor.py:161} INFO - Started process (PID=35) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:21.883+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:50:21.885+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:21.885+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:21.887+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:21.919+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.044 seconds
+[2026-07-21T14:50:52.086+0000] {processor.py:161} INFO - Started process (PID=37) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:52.088+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:50:52.092+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:50:52.091+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:52.096+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:50:52.118+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.038 seconds
+[2026-07-21T14:51:22.280+0000] {processor.py:161} INFO - Started process (PID=39) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:22.281+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:51:22.283+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:22.283+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:22.286+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:22.307+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.031 seconds
+[2026-07-21T14:51:52.465+0000] {processor.py:161} INFO - Started process (PID=41) to work on /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:52.466+0000] {processor.py:830} INFO - Processing file /home/airflow/dags/helpers/email_alert.py for tasks to queue
+[2026-07-21T14:51:52.469+0000] {logging_mixin.py:188} INFO - [2026-07-21T14:51:52.469+0000] {dagbag.py:538} INFO - Filling up the DagBag from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:52.472+0000] {processor.py:842} WARNING - No viable dags retrieved from /home/airflow/dags/helpers/email_alert.py
+[2026-07-21T14:51:52.498+0000] {processor.py:183} INFO - Processing /home/airflow/dags/helpers/email_alert.py took 0.038 seconds
