@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Batch Delete Script — Interactive Mode
+Batch Delete Script
 Deletes rows in controlled batches to avoid long table locks.
+
+Modes:
+  Interactive : python3 batch_delete.py
+  Config      : python3 batch_delete.py --config job.yaml
+  Dry Run     : python3 batch_delete.py --config job.yaml --dry-run
 """
 
 import pymysql
@@ -10,7 +15,9 @@ import sys
 import os
 import getpass
 import logging
-from datetime import datetime
+import argparse
+import yaml
+from datetime import datetime, timedelta
 
 
 def get_connection(host, port, user, password, db):
@@ -52,13 +59,27 @@ def column_exists(conn, db, table, column):
 
 
 def setup_logger(logfile):
-    logger = logging.getLogger("batch_delete")
+    logger = logging.getLogger(f"batch_delete.{os.getpid()}")
     logger.setLevel(logging.INFO)
     fmt = logging.Formatter("%(asctime)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     fh = logging.FileHandler(logfile)
     fh.setFormatter(fmt)
     logger.addHandler(fh)
+    sh = logging.StreamHandler(sys.stderr)
+    sh.setFormatter(fmt)
+    logger.addHandler(sh)
     return logger
+
+
+def resolve_threshold(target_cfg):
+    if "retention_days" in target_cfg and "threshold" in target_cfg:
+        raise ValueError("Config error: specify either 'retention_days' or 'threshold', not both.")
+    if "retention_days" in target_cfg:
+        days = int(target_cfg["retention_days"])
+        return (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    if "threshold" in target_cfg:
+        return str(target_cfg["threshold"])
+    raise ValueError("Config error: 'retention_days' or 'threshold' is required in target section.")
 
 
 def batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile):
@@ -101,12 +122,113 @@ def batch_delete(host, port, user, password, db, table, column, threshold, batch
     return total_deleted
 
 
-def main():
+def run_config_mode(config_path, dry_run=False):
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f)
+
+    conn_cfg = cfg["connection"]
+    target_cfg = cfg["target"]
+    batch_cfg = cfg.get("batch", {})
+
+    host = conn_cfg["host"]
+    port = conn_cfg.get("port", 3306)
+    user = conn_cfg["user"]
+    db = target_cfg["db"]
+    table = target_cfg["table"]
+    column = target_cfg["column"]
+    batch_size = batch_cfg.get("size", 1000)
+    sleep_sec = batch_cfg.get("sleep", 0.5)
+
+    password_env = conn_cfg.get("password_env", "")
+    if password_env:
+        password = os.environ.get(password_env)
+        if not password:
+            print(f"[ERROR] Environment variable '{password_env}' is not set or empty.")
+            sys.exit(1)
+    elif "password" in conn_cfg:
+        password = conn_cfg["password"]
+    else:
+        print("[ERROR] No password configured. Set 'password_env' or 'password' in connection config.")
+        sys.exit(1)
+
+    threshold = resolve_threshold(target_cfg)
+
+    print(f"{'=' * 55}")
+    print(f"  BATCH DELETE — Config Mode {'(DRY RUN)' if dry_run else ''}")
+    print(f"{'=' * 55}")
+    print(f"  Config    : {config_path}")
+    print(f"  Host      : {host}:{port}")
+    print(f"  Database  : {db}")
+    print(f"  Table     : {table}")
+    print(f"  Column    : {column}")
+    print(f"  Threshold : < {threshold}")
+    if "retention_days" in target_cfg:
+        print(f"  Retention : {target_cfg['retention_days']} days")
+    print(f"  Batch     : {batch_size} rows, sleep {sleep_sec}s")
+
+    print(f"\n  Connecting...")
+    try:
+        conn = get_connection(host, port, user, password, db)
+    except Exception as e:
+        print(f"  [ERROR] Connection failed: {e}")
+        sys.exit(1)
+    print(f"  [OK] Connected to {host}:{port}")
+
+    if not table_exists(conn, db, table):
+        print(f"  [ERROR] Table `{table}` not found in database `{db}`.")
+        conn.close()
+        sys.exit(1)
+
+    if not column_exists(conn, db, table, column):
+        print(f"  [ERROR] Column `{column}` not found in table `{db}`.`{table}`.")
+        conn.close()
+        sys.exit(1)
+    print(f"  [OK] Table and column verified")
+
+    with conn.cursor() as cur:
+        sql = f"SELECT MIN(`{column}`), MAX(`{column}`), COUNT(*) FROM `{db}`.`{table}`"
+        cur.execute(sql)
+        col_min, col_max, total_table = cur.fetchone()
+
+    total_rows = pre_check(conn, db, table, column, threshold)
+    conn.close()
+
+    print(f"\n  [ Column Stats ]")
+    print(f"  MIN value   : {col_min}")
+    print(f"  MAX value   : {col_max}")
+    print(f"  Total rows  : {total_table:,}")
+    print(f"  Rows to del : {total_rows:,}")
+
+    if total_rows == 0:
+        print(f"\n  Nothing to delete. Done.")
+        return
+
+    est_batches = (total_rows + batch_size - 1) // batch_size
+    est_time = est_batches * sleep_sec
+    print(f"  Est batches : ~{est_batches:,}")
+    print(f"  Est time    : ~{est_time:.0f}s")
+
+    if dry_run:
+        print(f"\n  [DRY RUN] All checks passed. No rows deleted.")
+        print(f"  [DRY RUN] Would delete {total_rows:,} rows in ~{est_batches:,} batches.")
+        return
+
+    log_dir = os.path.join(os.path.dirname(os.path.abspath(config_path)), "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    logfile = os.path.join(log_dir, f"batch_delete_{db}_{table}_{timestamp}.log")
+
+    print(f"\n  Executing...")
+    print(f"  Logfile : {logfile}")
+    total = batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile)
+    print(f"\n  Done. Total deleted: {total:,}")
+
+
+def run_interactive_mode():
     print("=" * 55)
     print("  BATCH DELETE — Interactive Mode")
     print("=" * 55)
 
-    # --- Connection Info ---
     print("\n[ Connection Setup ]")
     host     = input("  Host / IP        : ").strip()
     port     = input("  Port     [3306]  : ").strip() or "3306"
@@ -114,7 +236,6 @@ def main():
     user     = input("  Username         : ").strip()
     password = getpass.getpass("  Password         : ").strip()
 
-    # --- Connect ---
     print("\n  Connecting for pre-check...")
     try:
         conn = get_connection(host, port, user, password, db)
@@ -122,7 +243,6 @@ def main():
         print(f"  [ERROR] Connection failed: {e}")
         sys.exit(1)
 
-    # --- Target Info with validation loop ---
     print("\n[ Delete Target ]")
     while True:
         table = input("  Table name       : ").strip()
@@ -138,7 +258,6 @@ def main():
             continue
         break
 
-    # --- Pre-check: MIN / MAX ---
     with conn.cursor() as cur:
         sql = f"SELECT MIN(`{column}`), MAX(`{column}`), COUNT(*) FROM `{db}`.`{table}`"
         cur.execute(sql)
@@ -149,11 +268,9 @@ def main():
     print(f"  MAX value   : {col_max}")
     print(f"  Total rows  : {total_table:,}")
 
-    # --- User sets threshold ---
     print()
     threshold = input(f"  Delete where `{column}` < ? : ").strip()
 
-    # --- Count affected rows ---
     total_rows = pre_check(conn, db, table, column, threshold)
     conn.close()
 
@@ -168,7 +285,6 @@ def main():
         print("\n  Nothing to delete. Exiting.")
         return
 
-    # --- Batch Config ---
     print("\n[ Batch Config ]")
     batch_size = input(f"  Batch size (rows per delete) [1000] : ").strip() or "1000"
     batch_size = int(batch_size)
@@ -179,7 +295,6 @@ def main():
     est_time    = est_batches * sleep_sec
     print(f"\n  Estimated: ~{est_batches:,} batches, ~{est_time:.0f}s minimum runtime")
 
-    # --- Final Confirmation ---
     print("\n" + "=" * 55)
     print(f"  DELETE FROM `{db}`.`{table}`")
     print(f"  WHERE `{column}` < {threshold}")
@@ -192,7 +307,6 @@ def main():
         print("  Aborted.")
         return
 
-    # --- Execute in background (fully detached) ---
     script_dir = os.path.dirname(os.path.abspath(__file__))
     timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
     logfile    = os.path.join(script_dir, f"batch_delete_{db}_{table}_{timestamp}.log")
@@ -200,7 +314,6 @@ def main():
     pid = os.fork()
 
     if pid > 0:
-        # Parent — print info and exit immediately
         print(f"\n[ Running in background ]")
         print(f"  PID     : {pid}")
         print(f"  Logfile : {logfile}")
@@ -209,13 +322,27 @@ def main():
         print(f"\n  Terminal aman ditutup.")
         sys.exit(0)
 
-    # Child — detach fully
     os.setsid()
     sys.stdin.close()
     sys.stdout = open(os.devnull, "w")
     sys.stderr = open(os.devnull, "w")
 
     batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Batch Delete — controlled row deletion")
+    parser.add_argument("--config", help="Path to YAML config file (non-interactive mode)")
+    parser.add_argument("--dry-run", action="store_true", help="Validate config and show scope without deleting")
+    args = parser.parse_args()
+
+    if args.config:
+        run_config_mode(args.config, dry_run=args.dry_run)
+    else:
+        if args.dry_run:
+            print("[ERROR] --dry-run requires --config")
+            sys.exit(1)
+        run_interactive_mode()
 
 
 if __name__ == "__main__":
