@@ -120,7 +120,9 @@ def create_job():
     host = ask("Host / IP")
     port = ask_int("Port", default=3306)
     user = ask("DB Username")
-    password_env = ask("Env variable name for password (e.g. RETENTION_PWD_PROD)")
+    password = getpass.getpass("  DB Password      : ").strip()
+    password_env = "RETENTION_PWD_" + safe_filename(host).upper()
+    print(f"  [OK] Password will be saved as {password_env} in .env")
 
     print("\n  [ Target Table ]")
     db = ask("Database name")
@@ -157,7 +159,7 @@ def create_job():
     }
 
     filename = f"{safe_filename(host)}_{safe_filename(db)}_{safe_filename(table)}.yaml"
-    return config, cron_expr, filename, password_env
+    return config, cron_expr, filename, password_env, password
 
 
 def write_yaml(config, filepath):
@@ -166,13 +168,15 @@ def write_yaml(config, filepath):
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
 
-def append_env_placeholder(password_env):
+def save_env_password(password_env, password):
     if os.path.exists(ENV_FILE):
         with open(ENV_FILE) as f:
-            if password_env in f.read():
-                return
+            content = f.read()
+        if password_env in content:
+            return
     with open(ENV_FILE, "a") as f:
-        f.write(f"export {password_env}='CHANGE_ME'\n")
+        escaped = password.replace("'", "'\\''")
+        f.write(f"export {password_env}='{escaped}'\n")
     os.chmod(ENV_FILE, 0o600)
 
 
@@ -184,20 +188,24 @@ def build_cron_line(cron_expr, yaml_path):
     )
 
 
-def run_dry_run(yaml_path, password_env):
-    print(f"\n  [ Dry Run: {os.path.basename(yaml_path)} ]")
+def load_env_file():
+    env = os.environ.copy()
+    if not os.path.exists(ENV_FILE):
+        return env
+    with open(ENV_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("export ") and "=" in line:
+                parts = line[len("export "):].split("=", 1)
+                key = parts[0].strip()
+                val = parts[1].strip().strip("'\"")
+                env[key] = val
+    return env
 
-    env_val = os.environ.get(password_env, "")
-    if not env_val:
-        print(f"  [!] Env variable '{password_env}' is not set in current shell.")
-        pw = getpass.getpass(f"  Enter password for dry-run (won't be saved) : ").strip()
-        if not pw:
-            print("  [SKIP] No password provided, skipping dry run.")
-            return False
-        env = os.environ.copy()
-        env[password_env] = pw
-    else:
-        env = os.environ.copy()
+
+def run_dry_run(yaml_path):
+    print(f"\n  [ Dry Run: {os.path.basename(yaml_path)} ]")
+    env = load_env_file()
 
     result = subprocess.run(
         [sys.executable, BATCH_SCRIPT, "--config", yaml_path, "--dry-run"],
@@ -228,11 +236,11 @@ def show_summary(jobs):
         print()
 
     print(f"  {'─' * 50}")
-    print(f"  Steps:")
-    print(f"    1. Edit {ENV_FILE} — replace CHANGE_ME with real passwords")
-    print(f"    2. Run dry-run for each job to verify")
-    print(f"    3. crontab -e → paste the entries above")
-    print(f"    4. Logs will be in: {os.path.join(JOBS_DIR, 'logs/')}")
+    print(f"  Passwords saved in : {ENV_FILE} (chmod 600)")
+    print(f"  Log output dir     : {os.path.join(JOBS_DIR, 'logs/')}")
+    print(f"\n  Next steps:")
+    print(f"    1. crontab -e → paste the entries above")
+    print(f"    2. Verify logs after first scheduled run")
 
 
 def main():
@@ -243,7 +251,7 @@ def main():
     jobs = []
 
     while True:
-        config, cron_expr, filename, password_env = create_job()
+        config, cron_expr, filename, password_env, password = create_job()
         yaml_path = os.path.join(JOBS_DIR, filename)
         cron_line = build_cron_line(cron_expr, yaml_path)
 
@@ -253,6 +261,7 @@ def main():
             "cron_line": cron_line,
             "yaml_path": yaml_path,
             "password_env": password_env,
+            "password": password,
         })
 
         print(f"\n  [OK] Job #{len(jobs)} configured: {filename}")
@@ -267,7 +276,8 @@ def main():
     for job in jobs:
         write_yaml(job["config"], job["yaml_path"])
         print(f"  [OK] {job['yaml_path']}")
-        append_env_placeholder(job["password_env"])
+        save_env_password(job["password_env"], job["password"])
+        print(f"  [OK] Password saved as {job['password_env']} in .env")
 
     if os.path.exists(ENV_FILE):
         print(f"  [OK] {ENV_FILE}")
@@ -280,7 +290,7 @@ def main():
     if run_it != "n":
         all_ok = True
         for job in jobs:
-            ok = run_dry_run(job["yaml_path"], job["password_env"])
+            ok = run_dry_run(job["yaml_path"])
             if ok:
                 print(f"  [PASS] {os.path.basename(job['yaml_path'])}")
             else:
