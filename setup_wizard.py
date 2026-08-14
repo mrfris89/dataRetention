@@ -9,6 +9,7 @@ import sys
 import yaml
 import getpass
 import subprocess
+import shutil
 from datetime import datetime
 
 
@@ -203,15 +204,33 @@ def load_env_file():
     return env
 
 
+def find_python():
+    if sys.executable:
+        return sys.executable
+    for name in ("python3", "python"):
+        path = shutil.which(name)
+        if path:
+            return path
+    return "python3"
+
+
 def run_dry_run(yaml_path):
     print(f"\n  [ Dry Run: {os.path.basename(yaml_path)} ]")
     env = load_env_file()
+    python = find_python()
 
-    result = subprocess.run(
-        [sys.executable, BATCH_SCRIPT, "--config", yaml_path, "--dry-run"],
-        env=env,
-        capture_output=False,
-    )
+    if not os.path.exists(BATCH_SCRIPT):
+        print(f"  [ERROR] batch_delete.py not found at: {BATCH_SCRIPT}")
+        return False
+
+    cmd = [python, BATCH_SCRIPT, "--config", yaml_path, "--dry-run"]
+    print(f"  CMD: {' '.join(cmd)}")
+
+    result = subprocess.run(cmd, env=env, capture_output=False)
+
+    if result.returncode != 0:
+        print(f"  [HINT] Make sure batch_delete.py is the latest version with --config support.")
+
     return result.returncode == 0
 
 
