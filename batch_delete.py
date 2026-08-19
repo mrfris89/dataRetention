@@ -82,14 +82,45 @@ def resolve_threshold(target_cfg):
     raise ValueError("Config error: 'retention_days' or 'threshold' is required in target section.")
 
 
-def batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile):
+def get_min_max(conn, db, table, column, where_clause=None, where_val=None):
+    with conn.cursor() as cur:
+        sql = f"SELECT MIN(`{column}`), MAX(`{column}`) FROM `{db}`.`{table}`"
+        if where_clause:
+            sql += f" WHERE {where_clause}"
+            cur.execute(sql, (where_val,))
+        else:
+            cur.execute(sql)
+        return cur.fetchone()
+
+
+def batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec=0):
     logger = setup_logger(logfile)
-    logger.info(f"START | DELETE FROM `{db}`.`{table}` WHERE `{column}` < {threshold} | batch={batch_size} sleep={sleep_sec}s")
+    logger.info(f"START | DELETE FROM `{db}`.`{table}` WHERE `{column}` < {threshold} | batch={batch_size} sleep={sleep_sec}s max_runtime={max_runtime_sec}s")
+
+    try:
+        conn = get_connection(host, port, user, password, db)
+        min_before, max_before = get_min_max(conn, db, table, column)
+        conn.close()
+        logger.info(f"BEFORE | MIN={min_before} | MAX={max_before}")
+    except Exception as e:
+        logger.error(f"Failed to get BEFORE min/max: {e}")
 
     total_deleted = 0
     iteration = 0
+    run_start = time.monotonic()
+    terminated_by_timeout = False
 
     while True:
+        if max_runtime_sec > 0:
+            elapsed = time.monotonic() - run_start
+            if elapsed >= max_runtime_sec:
+                logger.warning(
+                    f"TERMINATED | Exceeding the time — elapsed={elapsed:.0f}s "
+                    f"max_runtime={max_runtime_sec}s | deleted so far: {total_deleted:,}"
+                )
+                terminated_by_timeout = True
+                break
+
         iteration += 1
         batch_start = datetime.now()
         try:
@@ -118,7 +149,16 @@ def batch_delete(host, port, user, password, db, table, column, threshold, batch
         if sleep_sec > 0:
             time.sleep(sleep_sec)
 
-    logger.info(f"FINISHED | Total deleted: {total_deleted:,}")
+    try:
+        conn = get_connection(host, port, user, password, db)
+        min_after, max_after = get_min_max(conn, db, table, column)
+        conn.close()
+        logger.info(f"AFTER  | MIN={min_after} | MAX={max_after}")
+    except Exception as e:
+        logger.error(f"Failed to get AFTER min/max: {e}")
+
+    status = "TERMINATED (timeout)" if terminated_by_timeout else "FINISHED"
+    logger.info(f"{status} | Total deleted: {total_deleted:,}")
     return total_deleted
 
 
@@ -138,6 +178,7 @@ def run_config_mode(config_path, dry_run=False):
     column = target_cfg["column"]
     batch_size = batch_cfg.get("size", 1000)
     sleep_sec = batch_cfg.get("sleep", 0.5)
+    max_runtime_sec = int(batch_cfg.get("max_runtime_sec", 0))
 
     password_env = conn_cfg.get("password_env", "")
     if password_env:
@@ -165,6 +206,10 @@ def run_config_mode(config_path, dry_run=False):
     if "retention_days" in target_cfg:
         print(f"  Retention : {target_cfg['retention_days']} days")
     print(f"  Batch     : {batch_size} rows, sleep {sleep_sec}s")
+    if max_runtime_sec > 0:
+        print(f"  Max runtime : {max_runtime_sec}s ({max_runtime_sec/60:.1f} min)")
+    else:
+        print(f"  Max runtime : unlimited")
 
     print(f"\n  Connecting...")
     try:
@@ -191,13 +236,24 @@ def run_config_mode(config_path, dry_run=False):
         col_min, col_max, total_table = cur.fetchone()
 
     total_rows = pre_check(conn, db, table, column, threshold)
+
+    with conn.cursor() as cur:
+        sql = f"SELECT MIN(`{column}`), MAX(`{column}`) FROM `{db}`.`{table}` WHERE `{column}` >= %s"
+        cur.execute(sql, (threshold,))
+        min_after, max_after = cur.fetchone()
+
     conn.close()
 
-    print(f"\n  [ Column Stats ]")
+    print(f"\n  [ Column Stats — Before ]")
     print(f"  MIN value   : {col_min}")
     print(f"  MAX value   : {col_max}")
     print(f"  Total rows  : {total_table:,}")
     print(f"  Rows to del : {total_rows:,}")
+
+    print(f"\n  [ Column Stats — After (simulated) ]")
+    print(f"  MIN value   : {min_after}")
+    print(f"  MAX value   : {max_after}")
+    print(f"  Rows kept   : {total_table - total_rows:,}")
 
     if total_rows == 0:
         print(f"\n  Nothing to delete. Done.")
@@ -220,7 +276,7 @@ def run_config_mode(config_path, dry_run=False):
 
     print(f"\n  Executing...")
     print(f"  Logfile : {logfile}")
-    total = batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile)
+    total = batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec)
     print(f"\n  Done. Total deleted: {total:,}")
 
 

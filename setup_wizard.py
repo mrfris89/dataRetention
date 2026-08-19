@@ -142,6 +142,8 @@ def create_job():
     print("\n  [ Batch Config ]")
     batch_size = ask_int("Batch size (rows per DELETE)", default=1000)
     sleep_sec = ask_float("Sleep between batches (sec)", default=0.5)
+    max_runtime_min = ask_int("Max runtime allowed (minutes, 0 = unlimited)", default=60)
+    max_runtime_sec = max_runtime_min * 60
 
     cron_expr = ask_cron()
 
@@ -156,6 +158,7 @@ def create_job():
         "batch": {
             "size": batch_size,
             "sleep": sleep_sec,
+            "max_runtime_sec": max_runtime_sec,
         },
     }
 
