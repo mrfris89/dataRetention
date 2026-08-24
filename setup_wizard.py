@@ -209,11 +209,18 @@ def save_env_password(password_env, password):
     os.chmod(ENV_FILE, 0o600)
 
 
+def detect_python_path():
+    if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix):
+        return os.path.join(sys.prefix, "bin", "python3")
+    return sys.executable or "/usr/bin/python3"
+
+
 def build_cron_line(cron_expr, yaml_path):
+    python_path = detect_python_path()
     return (
         f"{cron_expr} /bin/bash -c "
         f"'source {ENV_FILE} && "
-        f"/usr/bin/python3 {BATCH_SCRIPT} --config {yaml_path}'"
+        f"{python_path} {BATCH_SCRIPT} --config {yaml_path}'"
     )
 
 
