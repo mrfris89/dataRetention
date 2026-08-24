@@ -145,6 +145,29 @@ def create_job():
     max_runtime_min = ask_int("Max runtime allowed (minutes, 0 = unlimited)", default=60)
     max_runtime_sec = max_runtime_min * 60
 
+    print("\n  [ Backup Before Delete ]")
+    do_backup = input("  Backup rows to CSV before delete? (y/n) [n] : ").strip().lower()
+    backup_section = None
+    if do_backup == "y":
+        local_dir = ask("Local backup directory", default="/tmp/retention_backups")
+        do_gcs = input("  Upload CSV to Google Cloud Storage? (y/n) [n] : ").strip().lower()
+        backup_section = {
+            "enabled": True,
+            "local_dir": local_dir,
+            "delete_local_after_upload": False,
+        }
+        if do_gcs == "y":
+            bucket = ask("GCS bucket name")
+            prefix = ask("GCS path prefix (folder)", default="retention-backups/")
+            credentials_file = ask("Path to GCS service account JSON")
+            backup_section["gcs"] = {
+                "bucket": bucket,
+                "prefix": prefix,
+                "credentials_file": credentials_file,
+            }
+            del_local = input("  Delete local CSV after GCS upload? (y/n) [y] : ").strip().lower()
+            backup_section["delete_local_after_upload"] = del_local != "n"
+
     cron_expr = ask_cron()
 
     config = {
@@ -161,6 +184,8 @@ def create_job():
             "max_runtime_sec": max_runtime_sec,
         },
     }
+    if backup_section:
+        config["backup"] = backup_section
 
     filename = f"{safe_filename(host)}_{safe_filename(db)}_{safe_filename(table)}.yaml"
     return config, cron_expr, filename, password_env, password

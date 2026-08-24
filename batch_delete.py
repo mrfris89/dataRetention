@@ -10,6 +10,7 @@ Modes:
 """
 
 import pymysql
+import csv
 import time
 import sys
 import os
@@ -82,18 +83,127 @@ def resolve_threshold(target_cfg):
     raise ValueError("Config error: 'retention_days' or 'threshold' is required in target section.")
 
 
-def get_min_max(conn, db, table, column, where_clause=None, where_val=None):
+def get_min_max(conn, db, table, column):
     with conn.cursor() as cur:
         sql = f"SELECT MIN(`{column}`), MAX(`{column}`) FROM `{db}`.`{table}`"
-        if where_clause:
-            sql += f" WHERE {where_clause}"
-            cur.execute(sql, (where_val,))
-        else:
-            cur.execute(sql)
+        cur.execute(sql)
         return cur.fetchone()
 
 
-def batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec=0):
+def export_to_csv(host, port, user, password, db, table, column, threshold, csv_path, logger, fetch_size=10000):
+    logger.info(f"BACKUP | Exporting rows WHERE `{column}` < {threshold} to {csv_path}")
+    export_start = datetime.now()
+
+    conn = get_connection(host, port, user, password, db)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT column_name FROM information_schema.columns "
+                f"WHERE table_schema = %s AND table_name = %s ORDER BY ordinal_position",
+                (db, table),
+            )
+            columns = [row[0] for row in cur.fetchall()]
+
+        with conn.cursor(pymysql.cursors.SSCursor) as cur:
+            sql = f"SELECT * FROM `{db}`.`{table}` WHERE `{column}` < %s"
+            cur.execute(sql, (threshold,))
+
+            total_rows = 0
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(columns)
+
+                while True:
+                    rows = cur.fetchmany(fetch_size)
+                    if not rows:
+                        break
+                    writer.writerows(rows)
+                    total_rows += len(rows)
+                    if total_rows % 100000 == 0:
+                        logger.info(f"BACKUP | Exported {total_rows:,} rows so far...")
+
+    finally:
+        conn.close()
+
+    export_end = datetime.now()
+    file_size = os.path.getsize(csv_path)
+    file_size_mb = file_size / (1024 * 1024)
+    logger.info(
+        f"BACKUP | Export complete: {total_rows:,} rows, {file_size_mb:.1f} MB "
+        f"| start={export_start:%Y-%m-%d %H:%M:%S} end={export_end:%Y-%m-%d %H:%M:%S}"
+    )
+    return total_rows, file_size
+
+
+def upload_to_gcs(local_path, bucket_name, gcs_prefix, credentials_file, logger):
+    try:
+        from google.cloud import storage
+    except ImportError:
+        logger.error("BACKUP | google-cloud-storage not installed. Run: pip install google-cloud-storage")
+        return False
+
+    filename = os.path.basename(local_path)
+    blob_path = f"{gcs_prefix.rstrip('/')}/{filename}" if gcs_prefix else filename
+
+    logger.info(f"BACKUP | Uploading {filename} to gs://{bucket_name}/{blob_path}")
+    upload_start = datetime.now()
+
+    try:
+        client = storage.Client.from_service_account_json(credentials_file)
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        blob.upload_from_filename(local_path)
+    except Exception as e:
+        logger.error(f"BACKUP | GCS upload failed: {e}")
+        return False
+
+    upload_end = datetime.now()
+    logger.info(
+        f"BACKUP | Upload complete: gs://{bucket_name}/{blob_path} "
+        f"| start={upload_start:%Y-%m-%d %H:%M:%S} end={upload_end:%Y-%m-%d %H:%M:%S}"
+    )
+    return True
+
+
+def run_backup(host, port, user, password, db, table, column, threshold, backup_cfg, logger):
+    local_dir = backup_cfg.get("local_dir", "/tmp")
+    os.makedirs(local_dir, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_filename = f"backup_{db}_{table}_{timestamp}.csv"
+    csv_path = os.path.join(local_dir, csv_filename)
+
+    total_rows, file_size = export_to_csv(
+        host, port, user, password, db, table, column, threshold, csv_path, logger
+    )
+
+    if total_rows == 0:
+        logger.info("BACKUP | No rows to backup, skipping.")
+        if os.path.exists(csv_path):
+            os.remove(csv_path)
+        return True
+
+    gcs_cfg = backup_cfg.get("gcs")
+    if gcs_cfg and gcs_cfg.get("bucket"):
+        credentials_file = gcs_cfg.get("credentials_file", "")
+        if not credentials_file or not os.path.exists(credentials_file):
+            logger.error(f"BACKUP | GCS credentials file not found: {credentials_file}")
+            return False
+
+        ok = upload_to_gcs(csv_path, gcs_cfg["bucket"], gcs_cfg.get("prefix", ""), credentials_file, logger)
+        if not ok:
+            return False
+
+        if backup_cfg.get("delete_local_after_upload", True):
+            os.remove(csv_path)
+            logger.info(f"BACKUP | Local file removed after upload: {csv_path}")
+    else:
+        logger.info(f"BACKUP | CSV saved locally: {csv_path}")
+
+    return True
+
+
+def batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec=0, backup_cfg=None):
     logger = setup_logger(logfile)
     logger.info(f"START | DELETE FROM `{db}`.`{table}` WHERE `{column}` < {threshold} | batch={batch_size} sleep={sleep_sec}s max_runtime={max_runtime_sec}s")
 
@@ -104,6 +214,12 @@ def batch_delete(host, port, user, password, db, table, column, threshold, batch
         logger.info(f"BEFORE | MIN={min_before} | MAX={max_before}")
     except Exception as e:
         logger.error(f"Failed to get BEFORE min/max: {e}")
+
+    if backup_cfg and backup_cfg.get("enabled"):
+        ok = run_backup(host, port, user, password, db, table, column, threshold, backup_cfg, logger)
+        if not ok:
+            logger.error("BACKUP FAILED | Aborting deletion. Fix backup issue and retry.")
+            return 0
 
     total_deleted = 0
     iteration = 0
@@ -169,6 +285,7 @@ def run_config_mode(config_path, dry_run=False):
     conn_cfg = cfg["connection"]
     target_cfg = cfg["target"]
     batch_cfg = cfg.get("batch", {})
+    backup_cfg = cfg.get("backup")
 
     host = conn_cfg["host"]
     port = conn_cfg.get("port", 3306)
@@ -210,6 +327,14 @@ def run_config_mode(config_path, dry_run=False):
         print(f"  Max runtime : {max_runtime_sec}s ({max_runtime_sec/60:.1f} min)")
     else:
         print(f"  Max runtime : unlimited")
+
+    if backup_cfg and backup_cfg.get("enabled"):
+        print(f"  Backup    : enabled → {backup_cfg.get('local_dir', '/tmp')}")
+        gcs_cfg = backup_cfg.get("gcs")
+        if gcs_cfg and gcs_cfg.get("bucket"):
+            print(f"  GCS       : gs://{gcs_cfg['bucket']}/{gcs_cfg.get('prefix', '')}")
+    else:
+        print(f"  Backup    : disabled")
 
     print(f"\n  Connecting...")
     try:
@@ -267,6 +392,15 @@ def run_config_mode(config_path, dry_run=False):
     if dry_run:
         print(f"\n  [DRY RUN] All checks passed. No rows deleted.")
         print(f"  [DRY RUN] Would delete {total_rows:,} rows in ~{est_batches:,} batches.")
+        if backup_cfg and backup_cfg.get("enabled"):
+            print(f"  [DRY RUN] Backup would export {total_rows:,} rows to CSV before deletion.")
+            gcs_cfg = backup_cfg.get("gcs")
+            if gcs_cfg and gcs_cfg.get("bucket"):
+                cred = gcs_cfg.get("credentials_file", "")
+                if cred and os.path.exists(cred):
+                    print(f"  [DRY RUN] GCS credentials file found: {cred}")
+                else:
+                    print(f"  [DRY RUN] [WARNING] GCS credentials file NOT found: {cred}")
         return
 
     log_dir = os.path.join(os.path.dirname(os.path.abspath(config_path)), "logs")
@@ -276,7 +410,7 @@ def run_config_mode(config_path, dry_run=False):
 
     print(f"\n  Executing...")
     print(f"  Logfile : {logfile}")
-    total = batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec)
+    total = batch_delete(host, port, user, password, db, table, column, threshold, batch_size, sleep_sec, logfile, max_runtime_sec, backup_cfg)
     print(f"\n  Done. Total deleted: {total:,}")
 
 
