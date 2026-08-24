@@ -11,6 +11,8 @@ Modes:
 
 import pymysql
 import csv
+import gzip
+import io
 import time
 import sys
 import os
@@ -109,7 +111,7 @@ def export_to_csv(host, port, user, password, db, table, column, threshold, csv_
             cur.execute(sql, (threshold,))
 
             total_rows = 0
-            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            with gzip.open(csv_path, "wt", encoding="utf-8", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow(columns)
 
@@ -129,7 +131,7 @@ def export_to_csv(host, port, user, password, db, table, column, threshold, csv_
     file_size = os.path.getsize(csv_path)
     file_size_mb = file_size / (1024 * 1024)
     logger.info(
-        f"BACKUP | Export complete: {total_rows:,} rows, {file_size_mb:.1f} MB "
+        f"BACKUP | Export complete: {total_rows:,} rows, {file_size_mb:.1f} MB (compressed) "
         f"| start={export_start:%Y-%m-%d %H:%M:%S} end={export_end:%Y-%m-%d %H:%M:%S}"
     )
     return total_rows, file_size
@@ -170,7 +172,7 @@ def run_backup(host, port, user, password, db, table, column, threshold, backup_
     os.makedirs(local_dir, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    csv_filename = f"backup_{db}_{table}_{timestamp}.csv"
+    csv_filename = f"backup_{db}_{table}_{timestamp}.csv.gz"
     csv_path = os.path.join(local_dir, csv_filename)
 
     total_rows, file_size = export_to_csv(
